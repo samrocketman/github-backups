@@ -1,0 +1,6 @@
+user: 'someuser'
+api_token: 'githubtoken'
+gitlab_mirrors: '/full/path/to/gitlab-mirrors'
+mirrors: '/full/path/to/gitlab-mirrors/repositories/Mirrors'
+#if you're using GitHub Enterprise then uncomment
+#api_url: 'http://ghe/api/v3'
