@@ -4,3 +4,5 @@ gitlab_mirrors: '/full/path/to/gitlab-mirrors'
 mirrors: '/full/path/to/gitlab-mirrors/repositories/Mirrors'
 #if you're using GitHub Enterprise then uncomment
 #api_url: 'http://ghe/api/v3'
+#if you want to mirror an organization instead of a user then uncomment
+#mirror_org: 'someorg'

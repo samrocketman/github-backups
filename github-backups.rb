@@ -1,4 +1,4 @@
-#!/usr/local/bin/ruby
+#!/usr/bin/env ruby
 #Sam Gleske 
 #Mon Feb 16 23:40:35 EST 2015
 #Fedora release 16 (Verne)
@@ -12,6 +12,7 @@ require 'pp'
 #GitHub info
 config = YAML.load_file('config.yml')
 user = config['user']
+mirror_org = config['mirror_org']
 api_token = config['api_token']
 #no trailing slash
 config['api_url'] ||= 'https://api.github.com'
@@ -20,20 +21,29 @@ api_url = config['api_url']
 gitlab_mirrors = config['gitlab_mirrors']
 mirrors = config['mirrors']
 
+if mirror_org != nil and mirror_org.length == 0 then
+  mirror_org = nil
+end
+
 #get repos and wikis
 parsed = ['']
 page = 1
 listing = `cd "#{mirrors}";ls -1 -d *`.split()
 while parsed.length > 0 do
-  res = `curl -s -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token #{api_token}' #{api_url}/users/#{user}/repos?page=#{page}`
+  if mirror_org then
+    url = "#{api_url}/orgs/#{mirror_org}/repos?page=#{page}"
+  else
+    url = "#{api_url}/users/#{user}/repos?page=#{page}"
+  end
+  res = `curl -s -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token #{api_token}' #{url}`
   parsed = JSON.parse(res)
   parsed.each do |repo|
     if not listing.include?(repo['name'])
     puts "clone " + repo['name']
-    `cd "#{gitlab_mirrors}";./add_mirror.sh --git --project-name #{repo['name']} --mirror #{repo['clone_url']}`
+    `cd "#{gitlab_mirrors}";./add_mirror.sh --git --project-name #{repo['name']} --mirror #{repo['ssh_url']}`
     end
     wiki_name = repo['name'] + '.wiki'
-    wiki_url = repo['clone_url'][0..-5] + '.wiki.git'
+    wiki_url = repo['ssh_url'][0..-5] + '.wiki.git'
     if repo['has_wiki'] and (not listing.include?(wiki_name))
       puts "clone " + wiki_url
       `cd "#{gitlab_mirrors}";./add_mirror.sh --git --project-name #{wiki_name} --mirror #{wiki_url}`
@@ -46,23 +56,25 @@ while parsed.length > 0 do
 end
 
 #get gists
-parsed = ['']
-page = 1
-listing = `cd "#{mirrors}";ls -1 -d *`.split()
-while parsed.length > 0 do
-  res = `curl -s -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token #{api_token}' #{api_url}/users/#{user}/gists?page=#{page}`
-  parsed = JSON.parse(res)
-  parsed.each do |gist|
-    gist_name = 'gist' + gist['id']
-    if not listing.include?(gist_name)
-      puts "clone " + gist_name
-      `cd "#{gitlab_mirrors}";./add_mirror.sh --git --project-name #{gist_name} --mirror #{gist['git_pull_url']}`
+if not mirror_org then
+  parsed = ['']
+  page = 1
+  listing = `cd "#{mirrors}";ls -1 -d *`.split()
+  while parsed.length > 0 do
+    res = `curl -s -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token #{api_token}' #{api_url}/users/#{user}/gists?page=#{page}`
+    parsed = JSON.parse(res)
+    parsed.each do |gist|
+      gist_name = 'gist' + gist['id']
+      if not listing.include?(gist_name)
+        puts "clone " + gist_name
+        `cd "#{gitlab_mirrors}";./add_mirror.sh --git --project-name #{gist_name} --mirror #{gist['git_pull_url']}`
+      end
     end
+    if page > 100
+      break
+    end
+    page += 1
   end
-  if page > 100
-    break
-  end
-  page += 1
 end
 
 
