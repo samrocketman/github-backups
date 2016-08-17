@@ -6,3 +6,6 @@ mirrors: '/full/path/to/gitlab-mirrors/repositories/Mirrors'
 #api_url: 'http://ghe/api/v3'
 #if you want to mirror an organization instead of a user then uncomment
 #mirror_org: 'someorg'
+#github_ignore_projects:
+#  - 'project1'
+#  - 'project2'

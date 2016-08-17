@@ -17,6 +17,7 @@ api_token = config['api_token']
 #no trailing slash
 config['api_url'] ||= 'https://api.github.com'
 api_url = config['api_url']
+github_ignore_projects = config['github_ignore_projects'] || []
 
 gitlab_mirrors = config['gitlab_mirrors']
 mirrors = config['mirrors']
@@ -38,9 +39,12 @@ while parsed.length > 0 do
   res = `curl -s -H 'Accept: application/vnd.github.v3+json' -H 'Authorization: token #{api_token}' #{url}`
   parsed = JSON.parse(res)
   parsed.each do |repo|
-    if not listing.include?(repo['name'])
-    puts "clone " + repo['name']
-    `cd "#{gitlab_mirrors}";./add_mirror.sh --git --project-name #{repo['name']} --mirror #{repo['ssh_url']}`
+    if github_ignore_projects.include? repo['name'] then
+      next
+    end
+    if not listing.include?(repo['name']) then
+      puts "clone " + repo['name']
+      `cd "#{gitlab_mirrors}";./add_mirror.sh --git --project-name #{repo['name']} --mirror #{repo['ssh_url']}`
     end
     wiki_name = repo['name'] + '.wiki'
     wiki_url = repo['ssh_url'][0..-5] + '.wiki.git'
